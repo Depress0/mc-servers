@@ -92,7 +92,12 @@ else
                 oldIps = a + "," + oldIps;
             }
         }
-        await localStorage.SetItemAsync("servers", oldIps.Substring(0, oldIps.Length - 1));
+        if (serverlist.Count == 1){
+            await localStorage.SetItemAsync("servers", "");
+        }
+        else{
+            await localStorage.SetItemAsync("servers", oldIps.Substring(0, oldIps.Length - 1));
+        }
         _navigationManager.NavigateTo("/", true);
     }
     protected override async Task OnInitializedAsync()
