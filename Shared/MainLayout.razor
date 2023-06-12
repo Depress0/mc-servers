@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudThemeProvider/>
+
+<MudLayout>
+    <HeadContent>
+        <MudElement HtmlTag="link" rel="icon" type="image/x-icon" href="favicon.svg"></MudElement>
+    </HeadContent>
+
+    <head>
+        <link rel="stylesheet" href="styles/font.css">
+    </head>
+    <MudAppBar Color="Color.Secondary" Elevation="0">
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-16">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>

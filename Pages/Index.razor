@@ -1,0 +1,125 @@
+﻿@page "/"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager _navigationManager
+<PageTitle>Servers</PageTitle>
+<h1>Servers</h1>
+@if (!loading)
+{
+    <MudSimpleTable>
+        <thead>
+            <th>IP</th>
+            <th>Online</th>
+            <th>Players</th>
+            <th>Software</th>
+            <th>Version</th>
+        </thead>
+        <tbody>
+            @foreach (var a in ApiResults)
+            {
+                <tr>
+                    @if (a.hostname is not null)
+                    {
+                        @if (a.online)
+                        {
+
+                            <td>@a.hostname</td>
+                            <td>@a.online</td>
+                            <td>@a.players.online / @a.players.max</td>
+                            @if (a.software is not null)
+                            {
+                                <td>@a.software</td>
+                            }
+                            else
+                            {
+                                <td>Vanilla</td>
+                            }
+                            <td>@a.version</td>
+
+
+                        }
+                        else
+                        {
+
+                            <td>@a.hostname</td>
+                            <td>@a.online</td>
+
+                        }
+                        <MudIconButton OnClick="()=>DeleteServer(a.hostname)" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                    }
+                </tr>
+
+            }
+        </tbody>
+    </MudSimpleTable>
+    <MudTextField @bind-Value="newServer"></MudTextField>
+    <MudButton OnClick="AddServer">Add server</MudButton>
+}
+else
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+@code {
+    List<string> serverlist = new();
+    List<Root> ApiResults = new();
+    bool loading = true;
+    string newServer;
+    async Task AddServer()
+    {
+        string oldIps = "";
+        if (serverlist.Count != 0)
+        {
+            foreach (string a in serverlist)
+            {
+                oldIps = a + "," + oldIps;
+                await localStorage.SetItemAsync("servers", oldIps + newServer);
+            }
+
+        }
+        else
+        {
+            await localStorage.SetItemAsync("servers", newServer);
+        }
+        StateHasChanged();
+        _navigationManager.NavigateTo("/", true);
+    }
+    async Task DeleteServer(string name)
+    {
+        string oldIps = "";
+        foreach (string a in serverlist)
+        {
+            if (a != name)
+            {
+                oldIps = a + "," + oldIps;
+            }
+        }
+        await localStorage.SetItemAsync("servers", oldIps.Substring(0, oldIps.Length - 1));
+        _navigationManager.NavigateTo("/", true);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        HttpClient client = new HttpClient();
+        string ips = await localStorage.GetItemAsync<string>("servers");
+        if (ips is null || ips == "")
+        {
+            loading = false;
+            return;
+        }
+        string[] arr = ips.Split(",");
+        foreach (var a in arr)
+        {
+            try
+            {
+                var result = await client.GetAsync($"https://api.mcsrvstat.us/2/{a}");
+                var data = await result.Content.ReadFromJsonAsync<Root>();
+                ApiResults.Add(data);
+                serverlist.Add(a);
+            }
+            catch
+            {
+
+            }
+        }
+        loading = false;
+        StateHasChanged();
+    }
+}
